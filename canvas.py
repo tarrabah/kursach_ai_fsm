@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 import PIL.ImageTk
 from point import Point
 
@@ -13,7 +13,7 @@ class canvas:
         self.C_w = C_w
         self.C_h = C_h
         self.image = Image.new('RGB', (C_w, C_h), 'white')
-
+        self.drawer = ImageDraw.Draw(self.image)
         self.pixels = self.image.load()
 
         self.boundary_check_x = self.C_w - 1
@@ -41,8 +41,7 @@ class canvas:
         self.pixels[x, y] = color_tuple
 
     def clear(self):
-        self.image = Image.new('RGB', (self.C_w, self.C_h), 'white')
-        self.pixels = self.image.load()
+        self.drawer.rectangle((0, 0, self.C_w, self.C_h), fill="white")
 
     def save(self):
         self.image.save('frame__%d.png' % self.num)
@@ -56,6 +55,9 @@ class canvas:
     '''
 
     def draw_line(self, p1, p2, color):
+        self.drawer.line((p1.x, p1.y, p2.x, p2.y), fill=color, width=1)
+
+    '''
         if p1.x == p2.x and p1.y == p2.y:
             return
 
@@ -85,6 +87,7 @@ class canvas:
                 rounded_x = m_round(x)
                 self.set_int_pixel(rounded_x, y, color)
                 x += dy_dx
+        '''
 
     def draw_traingle_frame(self, A, B, C, color):
         if B.y < A.y:

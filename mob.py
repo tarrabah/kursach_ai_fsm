@@ -1,5 +1,6 @@
 import math
 import random
+import time
 from enum import Enum
 from state_message import State_message
 
@@ -28,7 +29,7 @@ class Mob:
         self.endpoints = [
             [self.x, self.y] for _ in range(self.ray_amount)
         ]
-        self.speed = 0.8      # per s
+        self.speed = 3      # per s
         self.state = Mob_state.STATE_WAIT
 
         self.time_works = False
@@ -81,6 +82,7 @@ class Mob:
                 self.timer = 0
                 self.time_works = False
                 self.state = Mob_state.STATE_PATROLLING
+                self.t = time.time()
 
         elif self.state == Mob_state.STATE_PATROLLING:
             if self.route is None:
@@ -96,6 +98,9 @@ class Mob:
                 else:
 
                     if self.route.get_node_by_index(self.current_node + 1).dist_to(self.x, self.y) < 0.3:
+                        c = time.time()
+                        print(self.id, c - self.t)
+                        self.t = c
                         self.current_node = self.route.get_next_node_index(self.current_node)
 
                         self.angle = self.route.get_node_by_index(self.current_node + 1).angle_to(self.x, self.y)

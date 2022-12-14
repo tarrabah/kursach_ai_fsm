@@ -8,8 +8,8 @@ from field import Field
 from player import Player, Player_state
 from path_node import Node, Route
 
-FPS = 23
-MS_PER_UPDATE = 1 / 60
+PHYSICS_FPS = 60
+MS_PER_UPDATE = 1 / PHYSICS_FPS
 
 
 class Window(tk.Tk):
@@ -19,7 +19,7 @@ class Window(tk.Tk):
         super().__init__()
 
         self.work_status = True
-        self.tile_size = 25
+        self.tile_size = 55
         self.half_tile_size = self.tile_size // 2
         self.third_tile_size = self.tile_size // 3
 
@@ -86,10 +86,10 @@ class Window(tk.Tk):
             prev_t = curr_t
             self.lag += elapsed
             self.cummulative_lag = self.lag
-
+            #print(self.lag)
             while self.lag >= MS_PER_UPDATE:
                 phys_frame_counter += 1
-                self.field.update(self.lag)
+                self.field.update(MS_PER_UPDATE)
                 self.lag -= MS_PER_UPDATE
             graphic_frame_counter += 1
 
@@ -107,7 +107,7 @@ class Window(tk.Tk):
         if event.type == '2':     #press
             self.player.state = Player_state.STATE_MOVING
             self.player.angle = self.player.angle_table[event.keysym]
-            self.player.update(self.cummulative_lag)
+            self.player.update(MS_PER_UPDATE)
 
         elif event.type == 3:   #relesae
             self.player.state = Player_state.STATE_STATIONARY
