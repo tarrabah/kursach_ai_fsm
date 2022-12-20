@@ -18,7 +18,7 @@ class Player:
         self.move_inc = 1
         self.world = world      # class: field, means player also lives on this field
         self.color = color
-        self.speed = 6      # per
+        self.speed = 4      # per
         self.state = Player_state.STATE_STATIONARY
         self.angle_table = {'w': - math.pi / 2, 'd': 0, 's': math.pi / 2, 'a': math.pi}
         self.hitbox_inc = 0.35

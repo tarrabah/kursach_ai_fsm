@@ -14,6 +14,7 @@ class Field:
     def __init__(self, master, arr, h, w, teleports = None):
         self.h = h
         self.w = w
+        #print(self.h, self.w)
         self.plates = arr
         self.columns = len(arr[0])
         self.rows = len(arr)
@@ -25,6 +26,9 @@ class Field:
     def are_coords_safe_to_move(self, x, y):
         round_x = m_round(x)
         round_y = m_round(y)
+        #print(round_x, round_y)
+        if round_x > self.w - 1 or round_y > self.h - 1:
+            return False
 
         if self.plates[round_y][round_x] == "#" and (x - round_x) * (x - round_x) + (y - round_y) * (y - round_y) < 10:
             return False
@@ -49,7 +53,7 @@ class Field:
                         self.habitants[i].set_y(j[1][1])
             if isinstance(self.habitants[i], Player):
                 if self.plates[y][x] == '.':
-                    print("taken")
+                    #sprint("taken")
                     self.plates[y][x] = ' '
                     self.master.increase_score(10)
                     if self.master.score == self.master.max_score:
@@ -58,10 +62,14 @@ class Field:
 
     def new_state(self, id, state):
         self.master.update_state_label(id, state)
-        if state == Mob_state.STATE_FOUND:
-            self.master.spotted(id, Mob_state.STATE_FOUND)
-            self.habitants[id].state = Mob_state.STATE_PATROLLING
-            #self.master.spotted(id, Mob_state.STATE_PATROLLING)
+
+    def on_spotting(self, id, s):
+        if s == Mob_state.STATE_FOUND_DURING_PATROL:
+            self.master.spotted(id, Mob_state.STATE_FOUND_DURING_PATROL)
+            self.habitants[id].state = Mob_state.STATE_PATROL
+        elif s == Mob_state.STATE_FOUND_WHILE_LOOKING_AROUND:
+            self.master.spotted(id, Mob_state.STATE_FOUND_WHILE_LOOKING_AROUND)
+            self.habitants[id].state = Mob_state.STATE_RETURN
 
     def add_habitant(self, habitant):
         if not habitant.get_id() in self.habitants:
@@ -80,7 +88,3 @@ class Field:
                 return True
             else:
                 return False
-
-
-
-

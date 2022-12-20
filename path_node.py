@@ -1,7 +1,7 @@
 import math
 
 class Node:
-    def __init__(self, x, y, tile_size):
+    def __init__(self, x, y, tile_size = 25):
         self.x = x
         self.y = y
         self.tile_size = tile_size

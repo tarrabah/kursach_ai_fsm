@@ -30,12 +30,11 @@ class Window(tk.Tk):
         self.label_bg = tk.Label(master=self)
 
         self.lag = 0
-        self.cumulative_lag = 0 #used for player because of architecture
+        self.cumulative_lag = 0
 
         self.score = 0
         self.lives = 2
         self.max_score = 2560
-
 
         self.state_labels = []
         self.label_id1 = tk.Label(master=self, text = "NPC1: Blue")
@@ -71,7 +70,7 @@ class Window(tk.Tk):
         self.field.add_habitant(self.player)
         id = 1
         for i in routes:
-            self.field.add_habitant(Mob(id, self.field, *i[0].get_x_y(), (0, 0, 255), Route(i)))
+            self.field.add_habitant(Mob(id, self.field, *i[0].get_x_y(), (0, 155, 255), Route(i)))
             id += 1
 
     def load_level(self, filename):
@@ -129,7 +128,7 @@ class Window(tk.Tk):
                 index += 1
             index += 1
 
-        print(lvl_data[index], sep='\n')
+        #print(lvl_data[index], sep='\n')
 
         width = len(lvl_structure)
         height = len(lvl_structure[0])
@@ -143,6 +142,7 @@ class Window(tk.Tk):
 
     def update_state_label(self, id, state):
         self.state_labels[id - 1].configure(text=state.name)
+
 
     def start(self):
         prev_t = time.time()
@@ -216,13 +216,13 @@ class Window(tk.Tk):
                     self.canvas.draw_filled_squre(
                         Point(j * self.tile_size, i * self.tile_size),
                         Point(j * self.tile_size + self.tile_size, i * self.tile_size + self.tile_size),
-                        (0, 0, 255)
+                        (0, 0, 0)
                     )
                 elif self.field.plates[i][j] == "0":
                     self.canvas.draw_filled_squre(
                         Point(j * self.tile_size, i * self.tile_size),
                         Point(j * self.tile_size + self.tile_size, i * self.tile_size + self.tile_size),
-                        (0, 0, 0)
+                        (14, 250, 100)
                     )
                 elif self.field.plates[i][j] == ".":
                     x, y = j * self.tile_size + self.third_tile_size, i * self.tile_size + self.third_tile_size
@@ -250,11 +250,10 @@ class Window(tk.Tk):
             b = Point(x + self.tile_size, y + self.tile_size)
 
             self.canvas.draw_filled_squre(a, b, self.field.habitants[i].color)
-
+            '''
             if not isinstance(self.field.habitants[i], Player):
 
                 if self.field.habitants[i].get_route() is not None:
-
 
                     # start ------------------- end  then end becomes new start
                     start = self.field.habitants[i].get_route().get_nodes()[0]
@@ -270,7 +269,7 @@ class Window(tk.Tk):
                               self.field.habitants[i].get_route().get_nodes()[0].field_y
                               )
                     self.canvas.draw_line(a, b, self.field.habitants[i].color)
-
+            '''
     def tkinter_update(self):
         self.update()
         self.update_idletasks()
@@ -284,14 +283,13 @@ class Window(tk.Tk):
         self.work_status = False
 
     def spotted(self, id, state):
-        print("spotted")
-
+        print("main.py, spotted - 1 life")
         self.update_state_label(id, state)
 
         time.sleep(1)
         self.lives -= 1
         if self.lives == -1:
-            messagebox.showwarning("GAME OVER!", "NO MORE LIVES LEFT")
+            messagebox.showwarning("GAME OVER!", "NO MORE LIVES LEFT,\nYOUR SCORE: " + str(self.score))
             self.finish()
 
         self.label_lives.configure(text = "LIVES: " + str(self.lives))
@@ -302,7 +300,6 @@ class Window(tk.Tk):
     def win(self):
         messagebox.showwarning("YOU WON!", "CONGRATULATIONS!")
         self.finish()
-
 
 
 res = Window()
