@@ -99,7 +99,9 @@ class Mob:
 
                     if self.route.get_node_by_index(self.current_node + 1).dist_to(self.x, self.y) < 0.3:
                         c = time.time()
-                        print(self.id, c - self.t)
+                        self.x = round(self.x)
+                        self.y = round(self.y)
+                        #print(self.id, c - self.t)
                         self.t = c
                         self.current_node = self.route.get_next_node_index(self.current_node)
 

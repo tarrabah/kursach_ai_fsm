@@ -18,6 +18,9 @@ class Node:
     def __str__(self):
         return "x: " + str(self.x) + " y: " + str(self.y)
 
+    def get_x_y(self):
+        return (self.x, self.y)
+
 
 class Route:
     def __init__(self, nodes):

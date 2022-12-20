@@ -7,6 +7,7 @@ from canvas import canvas
 from field import Field
 from player import Player, Player_state
 from path_node import Node, Route
+from tkinter import messagebox
 
 PHYSICS_FPS = 60
 MS_PER_UPDATE = 1 / PHYSICS_FPS
@@ -19,7 +20,7 @@ class Window(tk.Tk):
         super().__init__()
 
         self.work_status = True
-        self.tile_size = 55
+        self.tile_size = 35
         self.half_tile_size = self.tile_size // 2
         self.third_tile_size = self.tile_size // 3
 
@@ -27,48 +28,118 @@ class Window(tk.Tk):
         self.title('RIM')
 
         self.label_bg = tk.Label(master=self)
-        self.label_bg.grid(column = 0, row = 0, columnspan = 2)
+
         self.lag = 0
-        self.cummulative_lag = 0 #  used for player because of architecture
+        self.cumulative_lag = 0 #used for player because of architecture
+
+        self.score = 0
+        self.lives = 2
+        self.max_score = 2560
+
 
         self.state_labels = []
         self.label_id1 = tk.Label(master=self, text = "NPC1: Blue")
         self.label_id2 = tk.Label(master=self, text = "NPC2: Green")
+        self.label_score = tk.Label(master=self, text = "SCORE: 0")
+        self.label_lives = tk.Label(master=self, text="Lives: " + str(self.lives))
 
-        self.label_id1.grid(column=0, row=1)
-        self.label_id2.grid(column=1, row=1)
+        self.label_id1.grid(column=0, row=2)
+        self.label_id2.grid(column=1, row=2)
+        self.label_score.grid(column=0, row=0)
+        self.label_lives.grid(column=1, row=0)
+        self.label_bg.grid(column=0, row=1, columnspan=2)
 
         for i in range(2):
             self.state_labels.append(tk.Label(master=self))
-            self.state_labels[i].grid(column=i, row=2)
-
+            self.state_labels[i].grid(column=i, row=3)
 
         self.bind("<KeyRelease>", self.process_input)
         self.bind("<KeyPress>", self.process_input)
 
         self.lag = 0
         #####
-        lvl = open("lvl.txt", 'r')
-        y = int(lvl.readline().strip())
-        lvl_structure = []
-        for i in range(y):
-            lvl_structure.append(list(lvl.readline().strip()))
+        lvl_structure, width, height, teleports, routes = self.load_level("lvl.txt")
 
-        x = len(lvl_structure[0])
-        self.field = Field(self, lvl_structure)
+        self.H = height * self.tile_size
+        self.W = width * self.tile_size
 
-        self.H = y * self.tile_size
-        self.W = x * self.tile_size
+        self.field = Field(self, lvl_structure, height, width, teleports)
         self.geometry(str(self.W) + 'x' + str(self.H + 50))
         self.canvas = canvas(self.W + 1, self.H + 1)
 
-        nodes_1 = [Node(7, 3, self.tile_size),  Node(7, 9, self.tile_size) , Node(14, 6, self.tile_size)]
-        nodes_2 = [Node(1, 6, self.tile_size), Node(18, 3, self.tile_size), Node(18, 10, self.tile_size), ]
-        self.field.add_habitant(Mob(1, self.field, 7, 3, (0, 0, 255), Route(nodes_1)))
-        self.field.add_habitant(Mob(2, self.field, 1, 6, (0, 255, 0), Route(nodes_2)))
-
-        self.player = Player(3, self.field, 18, 1, (255, 0, 0))
+        self.player = Player(0, self.field, 1, 1, (255, 0, 0))
         self.field.add_habitant(self.player)
+        id = 1
+        for i in routes:
+            self.field.add_habitant(Mob(id, self.field, *i[0].get_x_y(), (0, 0, 255), Route(i)))
+            id += 1
+
+    def load_level(self, filename):
+        lvl = open(filename, 'r')
+        lvl_data = list(map(lambda x: x.strip(), lvl.readlines()))
+        index = 0
+        lvl_structure = []
+        ## load level structure
+        while True:
+            index += 1
+            if lvl_data[index] != "level start":
+                break
+
+        while lvl_data[index] != "level end":
+            lvl_structure.append(list(lvl_data[index]))
+            index += 1
+
+        while True:
+            index += 1
+            if lvl_data[index] != "level end":
+                break
+
+        ## load teleports
+        teleports = []
+        while True:
+            index += 1
+            if lvl_data[index] != "teleports start":
+                break
+
+        while lvl_data[index] != "teleports end":
+            teleports.append(list(map(lambda x: list(map(int, x.split(' '))),lvl_data[index].split('-'))))
+            index += 1
+
+        while True:
+            index += 1
+            if lvl_data[index] != "teleports end":
+                break
+
+        ## load nodes and creatures
+        creatures = []
+        paths = []
+        j = -1
+        index += 1
+        while lvl_data[index] != "mobs end":
+
+            if lvl_data[index] != "mob start":
+                break
+            index += 1
+
+            paths.append([])
+            j += 1
+            while lvl_data[index] != "mob end":
+                x, y = list(map(int, lvl_data[index].split(' ')))
+                paths[j].append(Node(x, y, self.tile_size))
+                index += 1
+            index += 1
+
+        print(lvl_data[index], sep='\n')
+
+        width = len(lvl_structure)
+        height = len(lvl_structure[0])
+
+        return lvl_structure, height, width, teleports, paths
+
+    def increase_score(self, val):
+        self.score += val
+        self.label_score.configure(text = "SCORE: "+str(self.score))
+
 
     def update_state_label(self, id, state):
         self.state_labels[id - 1].configure(text=state.name)
@@ -85,8 +156,7 @@ class Window(tk.Tk):
 
             prev_t = curr_t
             self.lag += elapsed
-            self.cummulative_lag = self.lag
-            #print(self.lag)
+            self.cumulative_lag = self.lag
             while self.lag >= MS_PER_UPDATE:
                 phys_frame_counter += 1
                 self.field.update(MS_PER_UPDATE)
@@ -103,16 +173,18 @@ class Window(tk.Tk):
               )
 
     def process_input(self, event):
-
         if event.type == '2':     #press
+            prev_angle = self.player.angle
             self.player.state = Player_state.STATE_MOVING
             self.player.angle = self.player.angle_table[event.keysym]
-            self.player.update(MS_PER_UPDATE)
+            if event.keysym == "w" or event.keysym == "s":
+                self.player.x = round(self.player.x)
+            else:
+                self.player.y = round(self.player.y)
+            x, y = self.player.new_coords(0.5)
 
-        elif event.type == 3:   #relesae
-            self.player.state = Player_state.STATE_STATIONARY
-        else:
-            pass
+            if not self.player.can_move(x, y):
+                self.player.angle = prev_angle
 
     def render(self):
         self.canvas.clear()
@@ -144,8 +216,19 @@ class Window(tk.Tk):
                     self.canvas.draw_filled_squre(
                         Point(j * self.tile_size, i * self.tile_size),
                         Point(j * self.tile_size + self.tile_size, i * self.tile_size + self.tile_size),
-                        (255, 255, 0)
+                        (0, 0, 255)
                     )
+                elif self.field.plates[i][j] == "0":
+                    self.canvas.draw_filled_squre(
+                        Point(j * self.tile_size, i * self.tile_size),
+                        Point(j * self.tile_size + self.tile_size, i * self.tile_size + self.tile_size),
+                        (0, 0, 0)
+                    )
+                elif self.field.plates[i][j] == ".":
+                    x, y = j * self.tile_size + self.third_tile_size, i * self.tile_size + self.third_tile_size
+                    a = Point(x, y)
+                    b = Point(x + self.third_tile_size, y + self.third_tile_size)
+                    self.canvas.draw_filled_squre(a, b, (150, 150,0))
 
     def draw_fov(self, mob):
         s = Point(mob.x * self.tile_size + self.half_tile_size, mob.y * self.tile_size + self.half_tile_size)
@@ -171,12 +254,7 @@ class Window(tk.Tk):
             if not isinstance(self.field.habitants[i], Player):
 
                 if self.field.habitants[i].get_route() is not None:
-                    for node in self.field.habitants[i].get_route().get_nodes():
 
-                        x, y = node.x * self.tile_size + self.third_tile_size, node.y * self.tile_size + self.third_tile_size
-                        a = Point(x, y)
-                        b = Point(x + self.third_tile_size , y + self.third_tile_size)
-                        self.canvas.draw_filled_squre(a, b, self.field.habitants[i].color)
 
                     # start ------------------- end  then end becomes new start
                     start = self.field.habitants[i].get_route().get_nodes()[0]
@@ -205,13 +283,25 @@ class Window(tk.Tk):
     def finish(self):
         self.work_status = False
 
-    def game_over(self, id, state):
+    def spotted(self, id, state):
+        print("spotted")
+
         self.update_state_label(id, state)
-        self.tkinter_update()
+
         time.sleep(1)
+        self.lives -= 1
+        if self.lives == -1:
+            messagebox.showwarning("GAME OVER!", "NO MORE LIVES LEFT")
+            self.finish()
+
+        self.label_lives.configure(text = "LIVES: " + str(self.lives))
         self.lag -= 1
-        self.player.set_x(18)
+        self.player.set_x(1)
         self.player.set_y(1)
+
+    def win(self):
+        messagebox.showwarning("YOU WON!", "CONGRATULATIONS!")
+        self.finish()
 
 
 
