@@ -52,9 +52,6 @@ mob start
 4 10
 4 4
 mob end
-mobs end
-
-
 mob start
 8 24
 17 24
@@ -72,3 +69,4 @@ mob start
 8 21
 8 24
 mob end
+mobs end

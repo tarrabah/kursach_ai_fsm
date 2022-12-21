@@ -117,9 +117,9 @@ class Mob:
                 #print('LOOKING AROUND STOPPED')
                 self.state = Mob_state.STATE_RETURN
                 self.angle = self.saved_coords.angle_to(self.x, self.y)
-                print("my position:",self.x, self.y)
-                print("goes to", self.saved_coords)
-                print("angle:", math.degrees(self.angle), math.degrees(math.pi - abs(self.angle)))
+                #print("my position:",self.x, self.y)
+                #print("goes to", self.saved_coords)
+                #print("angle:", self.angle)
                 self.look_around_angle = 0
             else:
 
@@ -137,7 +137,7 @@ class Mob:
 
         elif self.state == Mob_state.STATE_RETURN:
 
-            if self.saved_coords.dist_to(self.x, self.y) < 0.3:
+            if self.saved_coords.dist_to(self.x, self.y) < 0.5:
                 #print("HAVE RETURNED")
                 c = time.time()
                 self.x = round(self.x)
@@ -174,8 +174,8 @@ class Mob:
                      #   print("SPOTTED DURING PATROL")
                         self.state = Mob_state.STATE_MOVE_TO_SPOT
                         self.chasing_point = Node(*enemy_coords)
-                        print("my position:", self.x, self.y)
-                        print("goes to:", self.chasing_point)
+                        #print("my position:", self.x, self.y)
+                        #print("goes to:", *enemy_coords)dd
 
 
                         self.saved_coords = Node(self.x, self.y)
@@ -183,11 +183,11 @@ class Mob:
                         #self.y = round(self.y)
                     #    print("SAVED POSITION:", self.x, self.y)
                     #    print("CHASES TO:", *enemy_coords)
-                        self.angle = angle#self.chasing_point.angle_to(self.x, self.y)
-                        print("angle:", math.degrees(self.angle))
+                        self.angle = self.chasing_point.angle_to(self.x, self.y)
+                        #print("angle:", self.angle)
                 else:
                     #print("DECIDES WHERE TO MOVE NEXT")
-                    if self.route.get_node_by_index(self.current_node + 1).dist_to(self.x, self.y) < 0.3:
+                    if self.route.get_node_by_index(self.current_node + 1).dist_to(self.x, self.y) < 0.5:
                     #    print("NEW NODE")
                         c = time.time()
                         self.x = round(self.x)
