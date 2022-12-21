@@ -6,8 +6,7 @@ from state_message import State_message
 from path_node import Node
 from player import Player
 def m_round(num):
-    num = int(num + (0.5 if num > 0 else -0.5))
-    return num
+    return round(num)
 
 
 class Mob_state(Enum):
@@ -87,7 +86,7 @@ class Mob:
             if not self.time_works:
                 self.time_works = True
 
-            if self.timer > 5:
+            if self.timer > 3:
                 self.timer = 0
                 self.time_works = False
                 self.state = Mob_state.STATE_PATROL
@@ -95,11 +94,11 @@ class Mob:
                 self.t = time.time()
 
         elif self.state == Mob_state.STATE_MOVE_TO_SPOT:
-            if self.chasing_point.dist_to(self.x, self.y) < 0.3:
+            if self.chasing_point.dist_to(self.x, self.y) < 0.5:
                 #print('AT CHASING POINT')
                 c = time.time()
-                self.x = round(self.x)
-                self.y = round(self.y)
+                self.x = self.chasing_point.x
+                self.y = self.chasing_point.y
                 # print(self.id, c - self.t)
                 self.t = c
 
@@ -108,6 +107,8 @@ class Mob:
 
             else:
                 #print('MOVES TO CHASING POINT')
+                #print("my position", self.x, self.y)
+                #print("point of return:", self.chasing_point)
                 self.move(lag * self.speed)
                 self.update_fov_endpoints()
 
@@ -115,9 +116,10 @@ class Mob:
             if self.look_around_angle >= 2 * math.pi:
                 #print('LOOKING AROUND STOPPED')
                 self.state = Mob_state.STATE_RETURN
-                self.x = round(self.x)
-                self.y = round(self.y)
                 self.angle = self.saved_coords.angle_to(self.x, self.y)
+                print("my position:",self.x, self.y)
+                print("goes to", self.saved_coords)
+                print("angle:", math.degrees(self.angle), math.degrees(math.pi - abs(self.angle)))
                 self.look_around_angle = 0
             else:
 
@@ -125,12 +127,10 @@ class Mob:
                 self.angle += math.pi/50
                 self.look_around_angle += math.pi/50
 
-                spotted_enemy, enemy_coords, dist = self.update_fov_endpoints()
+                spotted_enemy, enemy_coords, dist, a = self.update_fov_endpoints()
                 if spotted_enemy:
                     #print("FOUND DURING LOOKING AROUND")
                     self.state = Mob_state.STATE_FOUND_WHILE_LOOKING_AROUND
-                    self.x = round(self.x)
-                    self.y = round(self.y)
                     self.angle = self.saved_coords.angle_to(self.x, self.y)
                     self.look_around_angle = 0
 
@@ -163,28 +163,32 @@ class Mob:
                     self.angle += lag * 0.4
                     self.update_fov_endpoints()
             else:
-                spotted_enemy, enemy_coords, dist = self.update_fov_endpoints()
+                spotted_enemy, enemy_coords, dist, angle = self.update_fov_endpoints()
 
                 if spotted_enemy:
                     if dist < 1 / 2:
-                        #print("FOUND DURING PATROL", dist)
+                    #    print("FOUND DURING PATROL", dist)
                         self.state = Mob_state.STATE_FOUND_DURING_PATROL
                     else:
                         #print(dist)
-                        #print("SPOTTED DURING PATROL")
+                     #   print("SPOTTED DURING PATROL")
                         self.state = Mob_state.STATE_MOVE_TO_SPOT
                         self.chasing_point = Node(*enemy_coords)
+                        print("my position:", self.x, self.y)
+                        print("goes to:", self.chasing_point)
+
 
                         self.saved_coords = Node(self.x, self.y)
-                        self.x = round(self.x)
-                        self.y = round(self.y)
-                        #print("SAVED POSITION:", self.x, self.y)
-                        #print("CHASES TO:", *enemy_coords)
-                        self.angle = self.chasing_point.angle_to(self.x, self.y)
+                        #self.x = round(self.x)
+                        #self.y = round(self.y)
+                    #    print("SAVED POSITION:", self.x, self.y)
+                    #    print("CHASES TO:", *enemy_coords)
+                        self.angle = angle#self.chasing_point.angle_to(self.x, self.y)
+                        print("angle:", math.degrees(self.angle))
                 else:
                     #print("DECIDES WHERE TO MOVE NEXT")
                     if self.route.get_node_by_index(self.current_node + 1).dist_to(self.x, self.y) < 0.3:
-                        #print("NEW NODE")
+                    #    print("NEW NODE")
                         c = time.time()
                         self.x = round(self.x)
                         self.y = round(self.y)
@@ -216,6 +220,7 @@ class Mob:
         spotted_enemy = False
         enemy_coords = None, None
         dist = None
+        angle = None
 
         for i in range(self.ray_amount):
             x, y = self.x, self.y
@@ -229,17 +234,19 @@ class Mob:
                 y += math.sin(ray_angle) * ray_len_change
 
                 if not self.field.are_coords_safe_to_move(x, y):
-                    not_hit = False
+                    break
                 if ray_len >= max_ray_len:
-                    not_hit = False
+                    break
 
                 who_there = self.field.is_anybody_there(x, y)
                 if isinstance(who_there, Player):
-                    r_x, r_y = round(who_there.get_x()), round(who_there.get_y())
-                    if math.sqrt((r_x - who_there.get_x()) ** 2 + (r_y - who_there.get_y()) ** 2) > 0.3:
-                        not_hit = False
-                        spotted_enemy = True
-                        enemy_coords = who_there.get_x(), who_there.get_y()
+                    #r_x, r_y = round(who_there.get_x()), round(who_there.get_y())
+                    #if (r_x - who_there.get_x()) ** 2 + (r_y - who_there.get_y()) ** 2 < 0.3:
+                    spotted_enemy = True
+                    enemy_coords = who_there.get_x(), who_there.get_y()
+                    angle = ray_angle
+                    #print(ray_angle)
+                    break
 
             self.endpoints[i][0] = x
             self.endpoints[i][1] = y
@@ -248,6 +255,6 @@ class Mob:
             dist = math.sqrt((self.x - enemy_coords[0]) ** 2 + (self.y - enemy_coords[1]) ** 2)
             dist /= max_ray_len
         #print(dist)
-        return [spotted_enemy, enemy_coords, dist]
+        return [spotted_enemy, enemy_coords, dist, angle]
 
 

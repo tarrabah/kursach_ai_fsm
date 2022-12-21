@@ -2,8 +2,7 @@ import math
 from enum import Enum
 
 def m_round(num):
-    num = int(num + (0.5 if num > 0 else -0.5))
-    return num
+    return round(num)
 
 class Player_state(Enum):
     STATE_STATIONARY, STATE_MOVING = 0, 1

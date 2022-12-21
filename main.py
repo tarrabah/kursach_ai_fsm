@@ -250,6 +250,7 @@ class Window(tk.Tk):
             b = Point(x + self.tile_size, y + self.tile_size)
 
             self.canvas.draw_filled_squre(a, b, self.field.habitants[i].color)
+            self.canvas.set_pixel(x + 2, y + 2, (255, 0, 0))
             '''
             if not isinstance(self.field.habitants[i], Player):
 

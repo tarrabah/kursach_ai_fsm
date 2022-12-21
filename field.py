@@ -6,8 +6,7 @@ from player import Player
 
 
 def m_round(num):
-    num = int(num + (0.5 if num > 0 else -0.5))
-    return num
+    return round(num)
 
 
 class Field:
@@ -30,7 +29,7 @@ class Field:
         if round_x > self.w - 1 or round_y > self.h - 1:
             return False
 
-        if self.plates[round_y][round_x] == "#" and (x - round_x) * (x - round_x) + (y - round_y) * (y - round_y) < 10:
+        if self.plates[round_y][round_x] == "#":
             return False
         else:
             return True

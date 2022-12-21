@@ -39,3 +39,6 @@ class Route:
     def get_nodes(self):
         return self.nodes
 
+print(math.degrees(Node(14.0, 6.649999999999991).dist_to(15, 11)))
+print(math.degrees(Node(15, 11).dist_to(14.0, 6.649999999999991)))
+
